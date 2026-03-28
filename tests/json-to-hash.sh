@@ -13,7 +13,6 @@ EOT
 RET=0
 json-to-hash MYHASH <<<"$JSON" || RET=$?
 echo "ERROR: $RET"
-set +x
 
 typeset -A MYHASH
 
