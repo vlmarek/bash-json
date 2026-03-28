@@ -1,0 +1,221 @@
+#!/bin/bash
+
+JSON_COMPACT=1
+JSON_SORT_KEYS=1
+
+function json-hash-to-json {
+	local -n _LOCAL_HASH_REFERENCE__=$1
+	local i
+	for i in "${!_LOCAL_HASH_REFERENCE__[@]}"; do
+		printf '%s\0%s\0' "$i" "${_LOCAL_HASH_REFERENCE__[$i]}"
+	done | jq -Rs $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) '
+	    split("\u0000") as $a # Create array
+	    | (if ($a|length)%2==1 and ($a[-1]=="") then $a[0:-1] else $a end) as $f
+	    | if ($f|length)%2 != 0 then
+		error("Odd number of fields: missing value for last key")
+	      else
+		[range(0; $f|length; 2) as $i | {key: $f[$i], value: $f[$i+1]}]
+		| from_entries
+	      end
+	'
+}
+
+function json-list-to-json {
+	local -n _LOCAL_LIST_REFERENCE__=$1
+	printf '%s\0' "${_LOCAL_LIST_REFERENCE__[@]}" | jq \
+		--argjson n "${#_LOCAL_LIST_REFERENCE__[@]}" \
+		-Rs $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) \
+		'split("\u0000")[:$n]'
+}
+
+function json-to-hash {
+	local -n _LOCAL_HASH_REFERENCE__=$1
+
+	# Verify that the variable we got is hash
+	if [[ $(typeset -p $1) != 'declare -A'* ]]; then
+		echo "Sorry, variable '$1' is not a hash ($(typeset -p $1 2>/dev/null))"
+		return 1
+	fi
+
+	# This is kind of ugly solution. I need my main loop to be in this
+	# shell so that the hash I set is the hash my caller gave me. That
+	# means that the jq has to be called as 'read < <(jq ...)'. The problem
+	# is that the subshell does not propagate it's exit code to us. So I
+	# run coprocess which reads a number and exits with that number as exit
+	# code.
+	local STATUS
+	local STATUS_PID
+	coproc STATUS { read -r rc; exit "${rc:-1}"; }
+
+	_LOCAL_HASH_REFERENCE__=()
+	while IFS= read -r -d '' k && IFS= read -r -d '' v; do
+		_LOCAL_HASH_REFERENCE__["$k"]="$v"
+	done < <(
+		RET=0
+		jq -jr '
+		    if type != "object" then
+		      error("expected object")
+		    elif has("") then
+		      # Bash can not have empty hash key. Exit with error for such hash.
+		      error("empty key is not allowed")
+		    else
+		      # Separate the key an value by \0
+		      to_entries[] | .key, "\u0000", .value, "\u0000"
+		    end
+		' || RET=$?
+		echo $RET >&"${STATUS[1]}"
+	)
+
+	exec {STATUS[1]}>&-
+	wait "$STATUS_PID"
+}
+
+function json-to-list {
+	local -n _LOCAL_LIST_REFERENCE__=$1
+
+	# Verify that the variable we got is hash
+	if [[ $(typeset -p $1) != 'declare -a'* ]]; then
+		echo "Sorry, variable '$1' is not a list ($(typeset -p $1 2>/dev/null))"
+		return 1
+	fi
+
+	# This is kind of ugly solution. I need my main loop to be in this
+	# shell so that the list I set is the list my caller gave me. That
+	# means that the jq has to be called as 'read < <(jq ...)'. The problem
+	# is that the subshell does not propagate it's exit code to us. So I
+	# run coprocess which reads a number and exits with that number as exit
+	# code.
+	local STATUS
+	local STATUS_PID
+	coproc STATUS { read -r rc; exit "${rc:-1}"; }
+
+	_LOCAL_LIST_REFERENCE__=()
+	while IFS= read -r -d '' v; do
+		_LOCAL_LIST_REFERENCE__+=("$v")
+	done < <(
+		RET=0
+		jq -jr '
+			if type != "array" then
+				error("expected array")
+			else
+				.[] | tostring, "\u0000"
+			end
+		' || RET=$?
+		echo $RET >&"${STATUS[1]}"
+	)
+
+	exec {STATUS[1]}>&-
+	wait "$STATUS_PID"
+}
+
+function json-add-to-list {
+	jq $( [ -t 0 ] && printf %s -n ) $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) '(. // []) + $ARGS.positional' --args "$@"
+}
+
+function json-add-to-hash-key-value {
+	jq '
+		# last positional arg is value, preceding args are path segments
+		($ARGS.positional[-1]) as $v
+		| ($ARGS.positional[0:-1]) as $p
+		| setpath($p; $v)
+	' $( [ -t 0 ] && printf %s -n ) $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@" 
+}
+
+function json-add-to-hash-key-json {
+	jq '
+		# last positional arg is value in json format, preceding args are path segments
+		($ARGS.positional[-1] | fromjson) as $v
+		| ($ARGS.positional[0:-1]) as $p
+		| setpath($p; $v)
+	' $( [ -t 0 ] && printf %s -n ) $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@" 
+}
+
+function json-remove {
+#	jq 'delpaths([$ARGS.positional])' $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@"
+	jq '
+	      . as $root
+	      | ($ARGS.positional) as $parts
+	      | (
+		  reduce range(0; $parts|length) as $i (
+		    {node: $root, path: []};
+		    ($parts[$i]) as $p
+		    | if (.node|type) == "object" then
+			.path += [$p] | .node = .node[$p]
+		      elif (.node|type) == "array" then
+			($p | tonumber? // error("array index must be a number: \($p)")) as $idx
+			| .path += [$idx] | .node = .node[$idx]
+		      else
+			error("cannot descend into type: \(.node|type)")
+		      end
+		  ) | .path
+		) as $path
+	      | $root
+	      | delpaths([$path])
+	' $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@"
+}
+function json-delete {
+	json-remove "$@"
+}
+
+function json-get {
+	jq '
+		reduce $ARGS.positional[] as $p (
+			.;
+			if type == "object" then
+				if has($p) then
+					.[$p]
+				else
+					error("object key does not exist: \($p)")
+				end
+			elif type == "array" then
+				($p | tonumber? // error("array index must be a number: \($p)")) as $i
+				| if ($i < 0) or ($i >= length) then
+					error("array index out of range: \($i)")
+				else
+					.[$i]
+				end
+
+			else
+				error("cannot descend into type: \(type)")
+			end
+		)
+	' $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@"
+}
+
+function json-set-internal {
+	local SET="$1"; shift
+	jq '
+		. as $root
+		| ($ARGS.positional | length) as $n
+		| if $n < 2 then error("usage: path... value") else . end
+		'"$SET"'
+		| ($ARGS.positional[0:-1]) as $parts
+		| (
+			reduce range(0; $parts|length) as $i (
+				{node: $root, path: []};
+				($parts[$i]) as $p
+				| if (.node|type) == "object" then
+					.path += [$p] | .node = .node[$p]
+				elif (.node|type) == "array" then
+					($p | tonumber? // error("array index must be a number: \($p)")) as $idx
+					| .path += [$idx] | .node = .node[$idx]
+				elif (.node|type) == "null" then
+					.path += [$p] | .node = null
+				else
+					error("cannot descend into type: \(.node|type)")
+				end
+			) | .path
+		) as $path
+		| $root
+		| setpath($path; $val)
+	' $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@"
+}
+
+
+function json-set-json {
+	json-set-internal '| ($ARGS.positional[-1] | fromjson) as $val' "$@"
+}
+
+function json-set-value {
+	json-set-internal '| $ARGS.positional[-1] as $val' "$@"
+}

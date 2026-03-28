@@ -1,0 +1,2 @@
+jq: error (at <stdin>:1): Cannot index array with string "k"
+jq: parse error: Invalid numeric literal at line 2, column 0

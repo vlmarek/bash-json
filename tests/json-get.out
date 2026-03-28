@@ -1,0 +1,48 @@
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="0")
+"1"
+testing declare -a params=([0]="1")
+{
+  "a": {
+    "x": "xx,",
+    "y": "yy"
+  },
+  "c": "d"
+}
+testing declare -a params=([0]="8")
+Error: 5
+testing declare -a params=([0]="1" [1]="a")
+{
+  "x": "xx,",
+  "y": "yy"
+}
+testing declare -a params=([0]="1" [1]="c")
+"d"
+testing declare -a params=([0]="1" [1]="errror")
+Error: 5
+testing declare -a params=()
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5"
+]

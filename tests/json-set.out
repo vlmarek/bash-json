@@ -1,0 +1,215 @@
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="0")
+Error: 5
+testing declare -a params=([0]="[\"h\",\"a\",\"!\"]")
+Error: 5
+testing declare -a params=([0]="0" [1]="new")
+[
+  "new",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="0" [1]="[\"h\",\"a\",\"!\"]")
+[
+  [
+    "h",
+    "a",
+    "!"
+  ],
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="1" [1]="new")
+[
+  "1",
+  "new",
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="1" [1]="[\"h\",\"a\",\"!\"]")
+[
+  "1",
+  [
+    "h",
+    "a",
+    "!"
+  ],
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="8" [1]="new")
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5",
+  null,
+  null,
+  null,
+  "new"
+]
+testing declare -a params=([0]="8" [1]="[\"h\",\"a\",\"!\"]")
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5",
+  null,
+  null,
+  null,
+  [
+    "h",
+    "a",
+    "!"
+  ]
+]
+testing declare -a params=([0]="1" [1]="a" [2]="new-in-hash")
+[
+  "1",
+  {
+    "a": "new-in-hash",
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="1" [1]="a" [2]="[\"h\",\"a\",\"!\"]")
+[
+  "1",
+  {
+    "a": [
+      "h",
+      "a",
+      "!"
+    ],
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="1" [1]="x" [2]="new-in-hash")
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d",
+    "x": "new-in-hash"
+  },
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="1" [1]="x" [2]="[\"h\",\"a\",\"!\"]")
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d",
+    "x": [
+      "h",
+      "a",
+      "!"
+    ]
+  },
+  "3",
+  "4",
+  "5"
+]
+testing declare -a params=([0]="a" [1]="x")
+Error: 5
+testing declare -a params=([0]="a" [1]="[\"h\",\"a\",\"!\"]")
+Error: 5
+testing declare -a params=([0]="5" [1]="a" [2]="b" [3]="x")
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5",
+  {
+    "a": {
+      "b": "x"
+    }
+  }
+]
+testing declare -a params=([0]="5" [1]="a" [2]="b" [3]="[\"h\",\"a\",\"!\"]")
+[
+  "1",
+  {
+    "a": {
+      "x": "xx,",
+      "y": "yy"
+    },
+    "c": "d"
+  },
+  "3",
+  "4",
+  "5",
+  {
+    "a": {
+      "b": [
+        "h",
+        "a",
+        "!"
+      ]
+    }
+  }
+]

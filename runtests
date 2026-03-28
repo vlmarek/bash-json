@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -eEuo pipefail
+
+DIR=$( mktemp -t -d runtest.XXXXXXXXX )
+function cleanup {
+	rm -rf "$DIR"
+}
+trap cleanup EXIT
+
+cd "$(dirname "${BASH_SOURCE[0]}")/tests"
+
+if [ $# -gt 0 ]; then
+	TESTS=( $( printf '%s\n' "$@" | sed -e 's,^.*/,,' ) )
+else
+	TESTS=( $( compgen -G '*.sh' ) )
+fi
+
+RET=0
+for FILE in "${TESTS[@]}"; do
+	echo "$FILE ..."
+	chmod +x "$FILE"
+	./"$FILE" > "$DIR/out" 2>"$DIR/err" || :
+	COMPARE_OUT="${FILE%.sh}.out"
+	COMPARE_ERR="${FILE%.sh}.err"
+	if [ -e "$COMPARE_OUT" ]; then
+		diff -u "$COMPARE_OUT" "$DIR/out" || RET=1
+	else
+		echo "No results found in '$COMPARE_OUT', creating the file"
+		cp "$DIR/out" "$COMPARE_OUT"
+		cat "$DIR/out"
+	fi
+	if [ -e "$COMPARE_ERR" ]; then
+		diff -u "$COMPARE_ERR" "$DIR/err" || RET=1
+	else
+		echo "No results found in '$COMPARE_ERR', creating the file"
+		cp "$DIR/err" "$COMPARE_ERR"
+		cat "$DIR/err"
+	fi
+done
+
+exit $RET

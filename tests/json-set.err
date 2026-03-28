@@ -1,0 +1,4 @@
+jq: error (at <stdin>:13): usage: path... value
+jq: error (at <stdin>:13): usage: path... value
+jq: error (at <stdin>:13): array index must be a number: a
+jq: error (at <stdin>:13): array index must be a number: a

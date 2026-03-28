@@ -1,0 +1,2 @@
+jq: error (at <stdin>:8): cannot descend into type: null
+jq: error (at <stdin>:8): array index must be a number: x

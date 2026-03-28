@@ -1,0 +1,3 @@
+../bash-json: line 35: typeset: MYHASH: not found
+jq: error (at <stdin>:1): empty key is not allowed
+jq: parse error: Unfinished string at EOF at line 2, column 0
