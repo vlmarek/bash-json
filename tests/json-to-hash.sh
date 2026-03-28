@@ -5,6 +5,7 @@ set -eEuo pipefail
 JSON_SORT_KEYS=1
 JSON_COMPACT=
 
+set -x
 JSON=$( cat <<'EOT'
 {"\n":"newline","\"":"\"","'":"'","1":"1","1 2 3":"1\t2\t3","\\n":"\\n","o\no":"o\no","xyz":""}
 EOT
@@ -13,6 +14,7 @@ EOT
 RET=0
 json-to-hash MYHASH <<<"$JSON" || RET=$?
 echo "ERROR: $RET"
+set +x
 
 typeset -A MYHASH
 
