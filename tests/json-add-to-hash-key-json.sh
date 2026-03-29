@@ -5,15 +5,15 @@ set -eEuo pipefail
 JSON_SORT_KEYS=1
 JSON_COMPACT=
 
-HASH=$( json-add-to-hash-key-value a b )
+HASH=$( json-empty-hash | json-add-to-hash-key-value a b )
 
 LIST=( $( seq 17 -3 1 ) )
 
 LIST=$( json-list-to-json LIST )
 
-json-add-to-hash-key-json 1 "$HASH"
+json-empty-hash | json-add-to-hash-key-json 1 "$HASH"
 
-json-add-to-hash-key-json 1 "$HASH" |
+json-empty-hash | json-add-to-hash-key-json 1 "$HASH" |
 json-add-to-hash-key-json 2 2 "$LIST" |
 json-add-to-hash-key-json 3 3 3 "$HASH"
 

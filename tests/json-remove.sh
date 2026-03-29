@@ -13,6 +13,7 @@ typeset -A HASH=(
 HASH=$( json-hash-to-json HASH )
 
 JSON=$(
+	json-empty-list |
 	json-add-to-list 1 2 3 |
 	json-set-json 1 "$HASH"
 )

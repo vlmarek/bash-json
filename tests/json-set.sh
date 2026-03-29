@@ -18,6 +18,7 @@ typeset -A HASH2=(
 HASH=$( json-hash-to-json HASH )
 
 JSON=$(
+	json-empty-list |
 	json-add-to-list 1 2 3 4 5 |
 	json-set-json 1 "$HASH" |
 	json-set-json 1 a "$(json-hash-to-json HASH2)"

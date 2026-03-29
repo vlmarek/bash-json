@@ -107,7 +107,7 @@ function json-to-list {
 }
 
 function json-add-to-list {
-	jq $( [ -t 0 ] && printf %s -n ) $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) '(. // []) + $ARGS.positional' --args "$@"
+	jq $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) '(. // []) + $ARGS.positional' --args "$@"
 }
 
 function json-add-to-hash-key-value {
@@ -116,7 +116,7 @@ function json-add-to-hash-key-value {
 		($ARGS.positional[-1]) as $v
 		| ($ARGS.positional[0:-1]) as $p
 		| setpath($p; $v)
-	' $( [ -t 0 ] && printf %s -n ) $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@" 
+	' $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@" 
 }
 
 function json-add-to-hash-key-json {
@@ -125,11 +125,10 @@ function json-add-to-hash-key-json {
 		($ARGS.positional[-1] | fromjson) as $v
 		| ($ARGS.positional[0:-1]) as $p
 		| setpath($p; $v)
-	' $( [ -t 0 ] && printf %s -n ) $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@" 
+	' $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@" 
 }
 
 function json-remove {
-#	jq 'delpaths([$ARGS.positional])' $([ -z "${JSON_COMPACT:-}" ] || printf %s -c) $([ -z "${JSON_SORT_KEYS:-}" ] || printf %s -S) --args "$@"
 	jq '
 	      . as $root
 	      | ($ARGS.positional) as $parts
@@ -216,4 +215,12 @@ function json-set-json {
 
 function json-set-value {
 	json-set-internal '| $ARGS.positional[-1] as $val' "$@"
+}
+
+function json-empty-hash {
+	echo '{}'
+}
+
+function json-empty-list {
+	echo '[]'
 }

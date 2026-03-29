@@ -5,10 +5,11 @@ set -eEuo pipefail
 JSON_SORT_KEYS=1
 JSON_COMPACT=
 
-json-add-to-hash-key-value a b
+json-empty-hash | json-add-to-hash-key-value a b
 
-echo '{}' | json-add-to-hash-key-value c d
+json-empty-hash | json-add-to-hash-key-value c d
 
+json-empty-hash |
 json-add-to-hash-key-value e f |
 json-add-to-hash-key-value 'g h' 'i j'
 
@@ -22,4 +23,4 @@ echo 'string' | json-add-to-hash-key-value k l 2> >(sed -e 's/^p/jq: p/' >&2) ||
 [ $RET != 4 ] || RET=5
 echo "Error: $RET"
 
-json-add-to-hash-key-value $(seq 1 10)
+json-empty-hash | json-add-to-hash-key-value $(seq 1 10)
