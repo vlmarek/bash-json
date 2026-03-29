@@ -46,3 +46,5 @@ testing declare -a params=()
   "4",
   "5"
 ]
+testing declare -a params=([0]="x")
+Error: 5

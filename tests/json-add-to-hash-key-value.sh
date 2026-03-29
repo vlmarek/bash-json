@@ -17,7 +17,9 @@ echo '[1,2]' | json-add-to-hash-key-value k l || RET=$?
 echo "Error: $RET"
 
 RET=0
-echo 'string' | json-add-to-hash-key-value k l || RET=$?
+# Modify the stderr and exit code so that it matches the output of more recent jq
+echo 'string' | json-add-to-hash-key-value k l 2> >(sed -e 's/^p/jq: p/' >&2) || RET=$?
+[ $RET != 4 ] || RET=5
 echo "Error: $RET"
 
 json-add-to-hash-key-value $(seq 1 10)

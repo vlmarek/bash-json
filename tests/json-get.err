@@ -1,2 +1,3 @@
-jq: error (at <stdin>:13): array index out of range: 8
+jq: error
 jq: error (at <stdin>:13): object key does not exist: errror
+jq: error (at <stdin>:13): array index must be a number: x

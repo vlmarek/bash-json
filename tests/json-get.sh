@@ -38,8 +38,10 @@ function testme {
 
 testme 0
 testme 1
-testme 8
+# Older jq throws different error
+testme 8 2> >( sed -e 's/^\(jq: error\).*/\1/' 1>&2 )
 testme 1 a
 testme 1 c
 testme 1 errror
 testme # Whole tree
+testme x

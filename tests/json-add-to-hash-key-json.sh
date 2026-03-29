@@ -23,5 +23,7 @@ echo '[1,2]' | json-add-to-hash-key-json k l || RET=$?
 echo "Error: $RET"
 
 RET=0
-echo 'string' | json-add-to-hash-key-json k l || RET=$?
+# stderr changes for older jq
+echo 'string' | json-add-to-hash-key-json k l 2> >( sed -e 's/^p/jq: p/' 1>&2) || RET=$?
+[ $RET -ne 4 ] || RET=5 # older jq
 echo "Error: $RET"
