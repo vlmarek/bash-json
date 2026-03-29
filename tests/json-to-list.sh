@@ -14,28 +14,14 @@ RET=0
 json-to-list MYLIST <<<"$JSON" || RET=$?
 echo "ERROR: $RET"
 
-# Older bash shows list differently, let's make my function
-function showlist {
-	local -n LIST_REF=$1
-	printf "declare -a %s=(" "$1"
-	local i=0
-	while [[ $i -lt "${#LIST_REF[@]}" ]]; do
-		[[ $i -eq 0 ]] || printf ' '
-		printf '[%d]=%q' $i "${LIST_REF[$i]}"
-		i=$(( $i + 1 ))
-	done
-	printf ')\n'
-}
-
 typeset -a MYLIST
 
 function testme {
         local -a params=( "$@" )
-        echo "testing $(showlist params)"
 
 	local RET=0
 	json-to-list MYLIST <<<"$1" || RET=$?
-	showlist MYLIST
+	typeset -p MYLIST
 
 	return $RET
 }
