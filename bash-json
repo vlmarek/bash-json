@@ -166,7 +166,7 @@ function json-get {
 					error("object key does not exist: \($p)")
 				end
 			elif type == "array" then
-				($p | tonumber? // error("array index must be a number: \($p)")) as $i
+				(try ($p | tonumber) catch error("array index must be a number: \($p)")) as $i
 				| if ($i < 0) or ($i >= length) then
 					error("array index out of range: \($i)")
 				else
