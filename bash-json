@@ -41,11 +41,8 @@ function json-to-hash {
 	# shell so that the hash I set is the hash my caller gave me. That
 	# means that the jq has to be called as 'read < <(jq ...)'. The problem
 	# is that the subshell does not propagate it's exit code to us. So I
-	# run coprocess which reads a number and exits with that number as exit
-	# code.
-	local STATUS
-	local STATUS_PID
-	coproc STATUS { read -r rc; exit "${rc:-1}"; }
+	# store it's exit code into temporary file ...
+	local TEMP_RESULT=$( mktemp -t bash-json.XXXXXXX )
 
 	_LOCAL_HASH_REFERENCE__=()
 	while IFS= read -r -d '' k && IFS= read -r -d '' v; do
@@ -63,11 +60,13 @@ function json-to-hash {
 		      to_entries[] | .key, "\u0000", .value, "\u0000"
 		    end
 		' || RET=$?
-		echo $RET >&"${STATUS[1]}"
+		echo $RET > "$TEMP_RESULT"
 	)
 
-	exec {STATUS[1]}>&-
-	wait "$STATUS_PID"
+	RET=$(<$TEMP_RESULT)
+	rm -f "$TEMP_RESULT"
+	[ -n "$RET" ] || RET=1
+	return $RET
 }
 
 function json-to-list {
@@ -80,14 +79,11 @@ function json-to-list {
 	fi
 
 	# This is kind of ugly solution. I need my main loop to be in this
-	# shell so that the list I set is the list my caller gave me. That
+	# shell so that the hash I set is the hash my caller gave me. That
 	# means that the jq has to be called as 'read < <(jq ...)'. The problem
 	# is that the subshell does not propagate it's exit code to us. So I
-	# run coprocess which reads a number and exits with that number as exit
-	# code.
-	local STATUS
-	local STATUS_PID
-	coproc STATUS { read -r rc; exit "${rc:-1}"; }
+	# store it's exit code into temporary file ...
+	local TEMP_RESULT=$( mktemp -t bash-json.XXXXXXX )
 
 	_LOCAL_LIST_REFERENCE__=()
 	while IFS= read -r -d '' v; do
@@ -101,11 +97,13 @@ function json-to-list {
 				.[] | tostring, "\u0000"
 			end
 		' || RET=$?
-		echo $RET >&"${STATUS[1]}"
+		echo $RET > "$TEMP_RESULT"
 	)
 
-	exec {STATUS[1]}>&-
-	wait "$STATUS_PID"
+	RET=$(<$TEMP_RESULT)
+	rm -f "$TEMP_RESULT"
+	[ -n "$RET" ] || RET=1
+	return $RET
 }
 
 function json-add-to-list {
